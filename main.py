@@ -30,7 +30,7 @@ while True:
         # clculate area and remove small elements
         area = cv2.contourArea(cnt)
         if area > gh.CONTOUR_PIXEL_FILTER:
-            cv2.drawContours(frame, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS)
+            cv2.drawContours(roi, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS)
 
     cv2.imshow("Mask", mask)    # showing black and white image after masking
     cv2.imshow("Frame",frame)   # showing the video with addint object detection methods
