@@ -5,7 +5,8 @@ import cv2
 cap = cv2.VideoCapture(gh.VIDEO_PATH) # TODO download better quality video
 
 # create an object from stable camera 
-object_creator = cv2.createBackgroundSubtractorMOG2() #TODO do its for unstable camera
+# object_creator = cv2.createBackgroundSubtractorMOG2()
+object_creator = cv2.createBackgroundSubtractorMOG2(history=2, varThreshold=10) 
 # object_creator = cv2.createBackgroundSubtractorKNN()
 
 
@@ -23,6 +24,7 @@ while True:
 
     # mask all static object with black
     mask = object_creator.apply(frame)
+    _, mask = cv2.threshold(mask, gh.MASK_LOW_THRSLD, gh.MASK_HIGH_THRSLD, cv2.THRESH_BINARY)
 
     # extract contours from the mask
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -30,7 +32,10 @@ while True:
         # clculate area and remove small elements
         area = cv2.contourArea(cnt)
         if area > gh.CONTOUR_PIXEL_FILTER:
-            cv2.drawContours(roi, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS)
+            x, y, w, h = cv2.boundingRect(cnt)
+            cv2.rectangle(frame, (x,y), (x+w, y+h), gh.CONTOUR_COLOR, gh.CONTOUR_THINKNESS)
+            # cv2.drawContours(frame, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS)
+            # cv2.drawContours(roi, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS) #BUG changing contour position in original video
 
     cv2.imshow("Mask", mask)    # showing black and white image after masking
     cv2.imshow("Frame",frame)   # showing the video with addint object detection methods
