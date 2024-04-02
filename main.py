@@ -12,6 +12,15 @@ object_creator = cv2.createBackgroundSubtractorMOG2() #TODO do its for unstable 
 while True:
     ret, frame = cap.read()
 
+    #check the video sizes
+    if gh.VIDEO_SIZE_PRINT:
+        height, width, _ = frame.shape
+        print(height,width)
+
+    # extract region of interest
+    roi = frame[gh.VIDEO_HEIGHT_L_LIMIT: gh.VIDEO_HEIGHT_H_LIMIT
+                ,gh.VIDEO_WIDTH_L_LIMIT: gh.VIDEO_WIDTH_H_LIMIT] # TODO maybe width needs adjustment
+
     # mask all static object with black
     mask = object_creator.apply(frame)
 
@@ -25,6 +34,7 @@ while True:
 
     cv2.imshow("Mask", mask)    # showing black and white image after masking
     cv2.imshow("Frame",frame)   # showing the video with addint object detection methods
+    cv2.imshow("ROI", roi)
 
     # Press 'q' to exit the video
     if cv2.waitKey(gh.FPS) & 0xFF == ord('q'):
