@@ -1,50 +1,94 @@
-import gloabal_handler as gh
+# import cv2
+# import imutils
+  
+# # Initializing the HOG person
+# # detector
+# hog = cv2.HOGDescriptor()
+# hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+  
+# cap = cv2.VideoCapture('video_short.mp4')
+  
+# while cap.isOpened():
+#     # Reading the video stream
+#     ret, image = cap.read()
+#     if ret:
+#         image = imutils.resize(image, 
+#                                width=min(400, image.shape[1]))
+  
+#         # Detecting all the regions 
+#         # in the Image that has a 
+#         # pedestrians inside it
+#         (regions, _) = hog.detectMultiScale(image,
+#                                             winStride=(4, 4),
+#                                             padding=(4, 4),
+#                                             scale=1.05)
+  
+#         # Drawing the regions in the 
+#         # Image
+#         for (x, y, w, h) in regions:
+#             cv2.rectangle(image, (x, y),
+#                           (x + w, y + h), 
+#                           (0, 0, 255), 2)
+  
+#         # Showing the output Image
+#         cv2.imshow("Image", image)
+#         if cv2.waitKey(30) & 0xFF == ord('q'):
+#             break
+#     else:
+#         break
+ 
+# cap.release()
+# cv2.destroyAllWindows()
+
+#-------------------------works---------------------------------
+
 import cv2
+import imutils
 
-# if using a video that is not inside the directory, add the path to the video inside VedioCapture function
-cap = cv2.VideoCapture(gh.VIDEO_PATH) # TODO download better quality video
+# frame per second value
+FPS  = 30
 
-# create an object from stable camera 
-# object_creator = cv2.createBackgroundSubtractorMOG2()
-object_creator = cv2.createBackgroundSubtractorMOG2(history=2, varThreshold=10) 
-# object_creator = cv2.createBackgroundSubtractorKNN()
+# Predefined colors for visualization
+COLORS = [(255, 0, 0), (130, 48, 219)]  # Blue, Pink
 
+# Initializing the HOG person detector
+hog = cv2.HOGDescriptor()
+hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
-while True:
-    ret, frame = cap.read()
+cap = cv2.VideoCapture('video_short.mp4')
 
-    #check the video sizes
-    if gh.VIDEO_SIZE_PRINT:
-        height, width, _ = frame.shape
-        print(height,width)
+person_colors = {}  # Dictionary to map person ID to color index
 
-    # extract region of interest
-    roi = frame[gh.VIDEO_HEIGHT_L_LIMIT: gh.VIDEO_HEIGHT_H_LIMIT
-                ,gh.VIDEO_WIDTH_L_LIMIT: gh.VIDEO_WIDTH_H_LIMIT] # TODO maybe width needs adjustment
+while cap.isOpened():
+    ret, image = cap.read()
+    if ret:
+        image = imutils.resize(image, width=min(400, image.shape[1]))
 
-    # mask all static object with black
-    mask = object_creator.apply(frame)
-    _, mask = cv2.threshold(mask, gh.MASK_LOW_THRSLD, gh.MASK_HIGH_THRSLD, cv2.THRESH_BINARY)
+        # Detecting all the regions in the image with pedestrians inside it
+        (regions, _) = hog.detectMultiScale(image,
+                                            winStride=(4, 4),
+                                            padding=(4, 4),
+                                            scale=1.05)
 
-    # extract contours from the mask
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in contours:
-        # clculate area and remove small elements
-        area = cv2.contourArea(cnt)
-        if area > gh.CONTOUR_PIXEL_FILTER:
-            x, y, w, h = cv2.boundingRect(cnt)
-            cv2.rectangle(frame, (x,y), (x+w, y+h), gh.CONTOUR_COLOR, gh.CONTOUR_THINKNESS)
-            # cv2.drawContours(frame, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS)
-            # cv2.drawContours(roi, [cnt], -1, gh.CONTOUR_COLOR , gh.CONTOUR_THINKNESS) #BUG changing contour position in original video
+        # Drawing the regions in the image
+        for i, (x, y, w, h) in enumerate(regions):
+            person_id = f'Person_{i}'  # Unique identifier for each person
+            if person_id not in person_colors:
+                person_colors[person_id] = i % len(COLORS)  # Assign color index based on the number of predefined colors
 
-    cv2.imshow("Mask", mask)    # showing black and white image after masking
-    cv2.imshow("Frame",frame)   # showing the video with addint object detection methods
-    cv2.imshow("ROI", roi)
+            color_index = person_colors[person_id]
+            color = COLORS[color_index]
+            cv2.rectangle(image, (x, y),
+                          (x + w, y + h),
+                          color, 2)
 
-    # Press 'q' to exit the video
-    if cv2.waitKey(gh.FPS) & 0xFF == ord('q'):
+        cv2.imshow("Image", image)
+
+        # if 'q' is pressed exit all
+        if cv2.waitKey(FPS) & 0xFF == ord('q'):
+            break
+    else:
         break
-
 
 cap.release()
 cv2.destroyAllWindows()
